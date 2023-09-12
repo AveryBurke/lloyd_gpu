@@ -25,7 +25,6 @@ export default {
         if (count > 0){
             cellStateOut[id.x] = (pos.xy / count) * 2 - 1; 
         }
-               
     }
     `,
 };
