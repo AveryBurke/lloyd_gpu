@@ -3,12 +3,53 @@ import coneShader from "./static/shaders/coneShader";
 import vornoiShader from "./static/shaders/columnSumShader";
 import computeShader from "./static/shaders/computeShader";
 import computeShader2 from "./static/shaders/computeRowSumShader";
+import stencilShader from "./static/shaders/stencilShader";
+import { arc } from "d3-shape";
+import getPoints from "./static/getPoints";
+import earcut from "earcut";
+
+//TO DO: Manually impliment stencil testing:
+//plan: render the stencil to a red texture. make it avaiblale to the voroni pipeline, through a bind group, and only render from the frament shader
+//if the stencil texture value is 1 (or 0 ?) at that location
 
 const main = async () => {
+
+  const ringHeight = 700;
+  const pathData = {
+      startAngle: 0,
+      endAngle: (300 * Math.PI) / 180,
+      innerRadius: 100,
+      outerRadius: ringHeight / 2,
+    },
+    path = arc()(pathData) || "",
+    num_points = 100,
+    points = getPoints(num_points, path),
+    centroi =  arc().centroid(pathData)
+    const numData = 1000,
+    clearValue = numData + 1;
+  //seed the vornoi cell sites
+  const coords: number[] = [];
+  for (let i = 0; i < numData; ++i) {
+    const { startAngle, endAngle, innerRadius, outerRadius } = pathData;
+    const randomClampedR =
+        Math.random() * (outerRadius - innerRadius) + innerRadius,
+      randomClampedTheta =
+        Math.random() * (endAngle - startAngle) + startAngle - Math.PI / 2,
+      x = Math.cos(randomClampedTheta) * randomClampedR,
+      y = Math.sin(randomClampedTheta) * randomClampedR;
+    coords.push(x / 512, y / 512);
+  }
+  const ears = earcut(points), //<--returns the indexes of the x coordinates of the triangle vertices in the points array
+    //fetch the coordiantes of the triangle vertices from the points array
+    stencilVerticies = ears.reduce<number[]>((acc, index) => {
+      const i = index * 2;
+      return [...acc, points[i]! / 512, points[i + 1]! / 512];
+    }, []),
+    stencilArray = new Float32Array(stencilVerticies);
   const canvas = document.querySelector("canvas");
   const adapter = await navigator.gpu.requestAdapter();
   if (adapter && canvas) {
-    const numData = 500;
+   
     //@ts-ignore
     const ctx = canvas.getContext("webgpu") as GPUCanvasContext;
     const device = await adapter.requestDevice();
@@ -35,6 +76,12 @@ const main = async () => {
         GPUTextureUsage.TEXTURE_BINDING |
         GPUTextureUsage.STORAGE_BINDING,
     });
+    const stencilTex = device.createTexture({
+      size: [ctx.canvas.width, ctx.canvas.height],
+      format: "r16uint",
+      usage: GPUTextureUsage.RENDER_ATTACHMENT | GPUTextureUsage.TEXTURE_BINDING
+    });
+
     //data
     const sizeData = new Uint32Array([numData]);
     const quad = new Float32Array([
@@ -43,17 +90,21 @@ const main = async () => {
       // Second triangle:
       -1.0, -1.0, 1.0, -1.0, 1.0, 1.0,
     ]);
-    const offsetArray = new Float32Array(
-      [...Array(numData * 2)].map(
-        (_) => getRandomArbitrary(-.05,.05)
-      )
-    );
-    console.log({offsetArray})
+    // const offsetArray = new Float32Array(
+    //   [...Array(numData * 2)].map((n, i) => {
+    //     const jitter = getRandomArbitrary(-.05, .05)
+    //     return i % 2 === 0 ? (centroi[0] / 512) + jitter : (centroi[1] / 512) + jitter
+    //     // return n % 2 === 0 ?  : 0
+    //     // return getRandomArbitrary()
+    //   })
+    // );
+    const offsetArray = new Float32Array(coords)
+    // console.log({ offsetArray });
     const colors = [];
     for (let i = 0; i < numData; i++) {
       colors.push(Math.random(), Math.random(), Math.random(), Math.random());
     }
-    colors.push(0, 0, 0, 1)//<--a color for the background
+    colors.push(0, 0, 0, 1); //<--a color for the background
     const vertexData = createCone(36);
     const indexData: number[] = [];
     for (let i = 0; i < vertexData.length; i++) {
@@ -66,7 +117,13 @@ const main = async () => {
     const indicies = new Uint32Array(indexData);
     const colorArray = new Float32Array(colors);
     const storage = new Float32Array(numData * tex1.height);
+    const clearValueArray = new Float32Array([clearValue])
 
+    const celarValueUnifromBuffer = device.createBuffer({
+      label:"clear value unifrom buffer",
+      size:clearValueArray.byteLength,
+      usage:GPUBufferUsage.UNIFORM | GPUBufferUsage.COPY_DST
+    })
     const offsetBuffer = device.createBuffer({
       label: "Offset Buffer",
       size: offsetArray.byteLength,
@@ -74,7 +131,7 @@ const main = async () => {
         GPUBufferUsage.VERTEX |
         GPUBufferUsage.COPY_DST |
         GPUBufferUsage.STORAGE |
-        GPUBufferUsage.COPY_SRC
+        GPUBufferUsage.COPY_SRC,
     });
     const vertexBuffer = device.createBuffer({
       label: "Cone buffer",
@@ -87,23 +144,15 @@ const main = async () => {
       usage:
         GPUBufferUsage.INDEX | GPUBufferUsage.COPY_DST | GPUBufferUsage.STORAGE,
     });
-    const colorBuffer = device.createBuffer({
+    const stencilBuffer = device.createBuffer({
       label: "Color buffer",
-      size: colorArray.byteLength,
+      size: stencilArray.byteLength,
       usage: GPUBufferUsage.VERTEX | GPUBufferUsage.COPY_DST,
     });
     const colorStorage = device.createBuffer({
       label: "Color Storage buffer",
       size: colorArray.byteLength,
       usage: GPUBufferUsage.STORAGE | GPUBufferUsage.COPY_DST,
-    });
-    const centroidStorage = device.createBuffer({
-      label: "centroid storage",
-      size: storage.byteLength,
-      usage:
-        GPUBufferUsage.STORAGE |
-        GPUBufferUsage.COPY_DST |
-        GPUBufferUsage.COPY_SRC,
     });
     const quadBuffer = device.createBuffer({
       label: "quad buffer",
@@ -115,7 +164,6 @@ const main = async () => {
       size: sizeData.byteLength,
       usage: GPUBufferUsage.UNIFORM | GPUBufferUsage.COPY_DST,
     });
-
     const stagingBuffer = device.createBuffer({
       size: offsetArray.byteLength,
       usage: GPUBufferUsage.MAP_READ | GPUBufferUsage.COPY_DST,
@@ -125,9 +173,9 @@ const main = async () => {
     device.queue.writeBuffer(uniformBuffer, 0, sizeData);
     device.queue.writeBuffer(vertexBuffer, 0, vertices);
     device.queue.writeBuffer(indexBuffer, 0, indicies);
-    // device.queue.writeBuffer(colorBuffer, 0, colorArray);
+    device.queue.writeBuffer(stencilBuffer, 0, stencilArray);
     device.queue.writeBuffer(colorStorage, 0, colorArray);
-    // device.queue.writeBuffer(centroidStorage, 0, storage);
+    device.queue.writeBuffer(celarValueUnifromBuffer, 0, clearValueArray)
     device.queue.writeBuffer(quadBuffer, 0, quad);
 
     //buffer layouts
@@ -146,11 +194,11 @@ const main = async () => {
       stepMode: "instance",
       attributes: [{ format: "float32x2", offset: 0, shaderLocation: 3 }],
     };
-    // const colorBufferLayout: GPUVertexBufferLayout = {
-    //   arrayStride: 16,
-    //   stepMode: "instance",
-    //   attributes: [{ format: "float32x4", offset: 0, shaderLocation: 2 }],
-    // };
+    const stencilStorageLayout: GPUVertexBufferLayout = {
+      arrayStride: 8,
+      attributes: [{ format: "float32x2", offset: 0, shaderLocation: 0 }],
+    };
+    
 
     const quadBufferLayout: GPUVertexBufferLayout = {
       arrayStride: 8,
@@ -188,6 +236,19 @@ const main = async () => {
         },
       ],
     });
+
+    const coneBindGroupLayout = device.createBindGroupLayout({
+      label:"cone bindgroup layout",
+      entries:[
+        {binding:0, visibility: GPUShaderStage.FRAGMENT, texture: { sampleType:"uint" }},
+        {binding:1, visibility:GPUShaderStage.FRAGMENT, buffer:{type:"uniform"}}
+      ]
+    })
+
+    const conePipelineLayout = device.createPipelineLayout({
+      label:"cone pipeline layout",
+      bindGroupLayouts:[coneBindGroupLayout]
+    })
 
     let computeBindGroupLayout = device.createBindGroupLayout({
       entries: [
@@ -230,7 +291,6 @@ const main = async () => {
         },
       ],
     });
-
     const pipelineLayout = device.createPipelineLayout({
       label: "Vornoi pipeline layout",
       bindGroupLayouts: [bindGroupLayout],
@@ -253,6 +313,15 @@ const main = async () => {
       label: "compute pipeline layout 2",
       bindGroupLayouts: [computeBindGroupLayout2],
     });
+
+    const coneBindGroup = device.createBindGroup({
+      label:"cone bind group",
+      layout:coneBindGroupLayout,
+      entries:[
+        {binding: 0, resource: stencilTex.createView()},
+        {binding: 1, resource: {buffer:celarValueUnifromBuffer}}
+      ]
+    })
 
     const computeBindGroup = device.createBindGroup({
       label: "compute bind group",
@@ -295,7 +364,7 @@ const main = async () => {
     const coneShaderModule = device.createShaderModule(coneShader);
     const conePipeline = device.createRenderPipeline({
       label: "Cone pipeline",
-      layout: "auto",
+      layout: conePipelineLayout,
       vertex: {
         module: coneShaderModule,
         entryPoint: "vertexMain",
@@ -304,11 +373,7 @@ const main = async () => {
       fragment: {
         module: coneShaderModule,
         entryPoint: "fragmentMain",
-        targets: [
-          {
-            format: tex1.format,
-          },
-        ],
+        targets: [{ format: tex1.format }],
       },
       primitive: {
         topology: "triangle-list",
@@ -332,41 +397,71 @@ const main = async () => {
       fragment: {
         module: vornoiShaderModule,
         entryPoint: "fragmentMain",
-        targets: [
-          {
-            format: canvasFormat,
-          },
-        ],
+        targets: [{ format: canvasFormat }],
       },
+    });
+    const setncilShaderModule = device.createShaderModule(stencilShader);
+    const stencilPipeline = device.createRenderPipeline({
+      label: 'pipeline for rendering the mask',
+      layout: "auto",
+      vertex: {
+        module: setncilShaderModule,
+        entryPoint: "vertexMain",
+        buffers: [stencilStorageLayout],
+      },
+      fragment: {
+        module: setncilShaderModule,
+        entryPoint: "fragmentMain",
+        targets: [stencilTex],
+      }
     });
 
     // setInterval(render, 400)
-    requestAnimationFrame(render)
-    //render!
-    // render()
-    // window.addEventListener('click',() => {
+    requestAnimationFrame(render);
+    // // render!
+    // render();
+    // window.addEventListener("click", () => {
     //   render();
-    //   stagingBuffer.mapAsync(
-    //     GPUMapMode.READ,
-    //     0, // Offset
-    //     offsetArray.byteLength, // Length
-    //   ).then(() => {
-    //     const copyArrayBuffer = stagingBuffer.getMappedRange(0, offsetArray.byteLength);
-    //     const data = copyArrayBuffer.slice(0);
-    //     stagingBuffer.unmap();
-    //     console.log(new Float32Array(data))
-    //   })
-    // })
+    //   stagingBuffer
+    //     .mapAsync(
+    //       GPUMapMode.READ,
+    //       0, // Offset
+    //       offsetArray.byteLength // Length
+    //     )
+    //     .then(() => {
+    //       const copyArrayBuffer = stagingBuffer.getMappedRange(
+    //         0,
+    //         offsetArray.byteLength
+    //       );
+    //       const data = copyArrayBuffer.slice(0);
+    //       stagingBuffer.unmap();
+    //       console.log(new Float32Array(data));
+    //     });
+    // });
 
     function render() {
       const encoder = device.createCommandEncoder();
+      //draw the stencil on the texture
+      const stencilRenderPass = encoder.beginRenderPass({
+        colorAttachments: [{
+          view:stencilTex.createView(),
+          loadOp: "clear",
+          clearValue: [0, 0, 0, 1],
+          storeOp:"store"
+        }],
+      });
+      stencilRenderPass.setPipeline(stencilPipeline);
+      stencilRenderPass.setVertexBuffer(0, stencilBuffer);
+      stencilRenderPass.draw(stencilArray.length / 2);
+      stencilRenderPass.end();
+
 
       const renderPass = encoder.beginRenderPass({
         colorAttachments: [
           {
             view: tex1.createView(),
             loadOp: "clear",
-            clearValue: { r: numData + 1, g: 0.0, b: 0.0, a: 1 }, //<-- make the clear value some shade of red that will not be assigned to cell
+            clearValue: { r: clearValue, g: 0.0, b: 0.0, a: 1 }, //<-- make the clear value some shade of red that will not be assigned to cell
             storeOp: "store",
           },
         ],
@@ -375,12 +470,14 @@ const main = async () => {
           depthClearValue: 1.0,
           depthLoadOp: "clear",
           depthStoreOp: "store",
-        },
+        }
+        ,
       });
 
       renderPass.setPipeline(conePipeline);
       renderPass.setVertexBuffer(0, vertexBuffer);
       renderPass.setVertexBuffer(1, offsetBuffer);
+      renderPass.setBindGroup(0, coneBindGroup)
       renderPass.setIndexBuffer(indexBuffer, "uint32");
       renderPass.drawIndexed(indexData.length, offsetArray.length / 2);
       renderPass.end();
@@ -396,8 +493,8 @@ const main = async () => {
       const computePass2 = encoder.beginComputePass();
       computePass2.setPipeline(compute2Pipeline);
       computePass2.setBindGroup(0, computeBindGroup2);
-      console.log(tex2.width)
-      let workgroup2CountX = Math.ceil(numData + 1 /  64);
+      console.log(tex2.width);
+      let workgroup2CountX = Math.ceil(numData + 1 / 64);
       // let workgroup2CountY = Math.ceil(tex2.height / 8);
       computePass2.dispatchWorkgroups(workgroup2CountX); //the shader only needs to make one pass accross the width of the texture
       computePass2.end();
@@ -410,16 +507,22 @@ const main = async () => {
             clearValue: { r: 0.0, g: 0.0, b: 0.0, a: 1 },
             storeOp: "store",
           },
-        ],
+        ]
       });
       renderPass2.setPipeline(vornoiPipeline);
       renderPass2.setBindGroup(0, bindGroup);
       renderPass2.setVertexBuffer(0, quadBuffer);
       renderPass2.draw(quad.length / 2);
       renderPass2.end();
-      encoder.copyBufferToBuffer(offsetBuffer, 0, stagingBuffer, 0, offsetArray.byteLength)
+      encoder.copyBufferToBuffer(
+        offsetBuffer,
+        0,
+        stagingBuffer,
+        0,
+        offsetArray.byteLength
+      );
       device.queue.submit([encoder.finish()]);
-      // requestAnimationFrame(render)
+      requestAnimationFrame(render)
     }
   }
 };
