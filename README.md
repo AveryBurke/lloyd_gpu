@@ -1,5 +1,6 @@
-![1000 Voronoi cells in an arc segmen](./arc.png)
-*1000 Voronoi cells in an arc segment*
+| ![1000 Voronoi cells in an arc segmen](./arc.png) |
+|:--:| 
+| *1000 Voronoi cells in an arc segment* |
 
 # Lloyd's algorithm, but in the GPU
 This is [Lloyd's algorithm](https://en.wikipedia.org/wiki/Lloyd%27s_algorithm) implemented with [WebGPU](https://developer.mozilla.org/en-US/docs/Web/API/WebGPU_API). The implementation is similar to the one used in the [Swingline Voronoi Stippling Library](https://www.mattkeeter.com/projects/swingline/).
