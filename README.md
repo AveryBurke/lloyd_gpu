@@ -1,15 +1,15 @@
-| ![1000 Voronoi cells in an arc segmen](./arc.png) |
-|:--:| 
-| *1000 Voronoi cells in an arc segment* |
+| ![1000 Voronoi cells in a concave arc segment](./arc.png) |
+|:--:|
+| *1000 Voronoi cells in a concave arc segment* |
 
 # Lloyd's algorithm, but in the GPU
 This is [Lloyd's algorithm](https://en.wikipedia.org/wiki/Lloyd%27s_algorithm) implemented with [WebGPU](https://developer.mozilla.org/en-US/docs/Web/API/WebGPU_API). The implementation is similar to the one used in the [Swingline Voronoi Stippling Library](https://www.mattkeeter.com/projects/swingline/).
 
 # What is Lloyd's algorithm?
 I'm glad you asked! Lloyd's algorithm is a method for finding evenly spaced points within a Euclidean subplane by iteratively constructing [Voroni diagrams](https://en.wikipedia.org/wiki/Voronoi_diagram) which partitions a subset of the plane into regions called "cells" or "Voronoi cells."  Each cell comprises the coordinates closest to the point inside it. Here's an example of a Voronoi diagram of 100 random points on a plane (*points on a plain*, is that a joke?). The cells are color-coded for clarity:
-![Vornoi diagram for 100 random points on a plane](./Vornoi-diagram.png)
-
-
+| ![Vornoi diagram of 100 random points on a plane](./Vornoi-diagram.png) |
+|:--:|
+| *Vornoi diagram of 100 random points on a plane* |
 For an example of a practical application, imagine that these points represent items on a screen and you want to highlight the item closest to the user’s mouse. In this scenario, you can render a hidden Voronoi diagram and highlight a point when the mouse is over that point's respective cell.  If you want to know more about Voronoi Diagrams, I suggest reading Francesco S. Bellelli's great [The fascinating world of Voronoi diagrams](https://fbellelli.com/posts/2021-07-08-the-fascinating-world-of-voronoi-diagrams/).
 
 Lloyd's algorithm operates through a series of steps aimed at making increasingly more uniform Voronoi diagrams. The result is a partition of N cells that are nearly identical. The process follows these steps:
