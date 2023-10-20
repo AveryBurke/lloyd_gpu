@@ -1,4 +1,4 @@
-![arc](./Screen%20Shot%202023-10-20%20at%2011.11.52%20AM.png)
+![arc](./arc.png)
 
 # Lloyd's algorithm, but in the GPU
 This is [Lloyd's algorithm](https://en.wikipedia.org/wiki/Lloyd%27s_algorithm) implemented with [WebGPU](https://developer.mozilla.org/en-US/docs/Web/API/WebGPU_API). The implementation is similar to the one used in the [Swingline Voronoi Stippling Library](https://www.mattkeeter.com/projects/swingline/).
@@ -17,7 +17,7 @@ Lloyd's algorithm operates through a series of steps aimed at making increasingl
 1. Move each point to the centroid of its cell
 1. Repeat these steps
 
-As the distance between a point and the centroid of its cell gradually diminishes, the distribution of points converges to a mesh of relatively uniform cells like the one pictured at the top of this article.
+As the distance between a point and the centroid of its cell gradually diminishes, the diagram converges to a mesh of relatively uniform cells like the one pictured at the top of this article.
 
 # Dependencies
 The project is built with, [Webpack](https://webpack.js.org/) and [Yarn](https://yarnpkg.com/). You will also need a [browser that supports WebGpu](https://caniuse.com/webgpu)
