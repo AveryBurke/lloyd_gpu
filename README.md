@@ -4,7 +4,7 @@
 This is [Lloyd's algorithm](https://en.wikipedia.org/wiki/Lloyd%27s_algorithm) implemented with [WebGPU](https://developer.mozilla.org/en-US/docs/Web/API/WebGPU_API). The implementation is similar to the one used in the [Swingline Voronoi Stippling Library](https://www.mattkeeter.com/projects/swingline/).
 
 # What is Lloyd's algorithm?
-I'm glad you asked! Lloyd's algorithm is a method for finding evenly spaced points within a Euclidean subplane by iteratively constructing[Voroni diagrams](https://en.wikipedia.org/wiki/Voronoi_diagram) which partitions a subset of the plane into regions called "cells" or "Voronoi cells."  Each cell comprises the coordinates closest to the point inside it. Here's an example of a Voronoi diagram of 100 random points on a plane (*points on a plain*, is that a joke?). The cells are color-coded for clarity:
+I'm glad you asked! Lloyd's algorithm is a method for finding evenly spaced points within a Euclidean subplane by iteratively constructing [Voroni diagrams](https://en.wikipedia.org/wiki/Voronoi_diagram) which partitions a subset of the plane into regions called "cells" or "Voronoi cells."  Each cell comprises the coordinates closest to the point inside it. Here's an example of a Voronoi diagram of 100 random points on a plane (*points on a plain*, is that a joke?). The cells are color-coded for clarity:
 ![Vornoi diagram for 100 random points on a plane](./Vornoi-diagram.png)
 
 
