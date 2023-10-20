@@ -1,9 +1,10 @@
-![arc](./arc.png)
+![arc](./Screen%20Shot%202023-10-20%20at%2011.11.52%20AM.png)
+
 # Lloyd's algorithm, but in the GPU
 This is [Lloyd's algorithm](https://en.wikipedia.org/wiki/Lloyd%27s_algorithm) implemented with [WebGPU](https://developer.mozilla.org/en-US/docs/Web/API/WebGPU_API). The implementation is similar to the one used in the [Swingline Voronoi Stippling Library](https://www.mattkeeter.com/projects/swingline/).
 
 # What is Lloyd's algorithm?
-I'm glad you asked! Lloyd's algorithm is a method for finding evenly spaced points within a Euclidean subplane by iteratively constructing[Voroni diagrams](https://en.wikipedia.org/wiki/Voronoi_diagram). A Voronoi diagram partitions a subset of the plane into regions called "cells" or "Voronoi cells."  Each cell comprises the coordinates closest to the point inside it. Here's an example of a Voronoi diagram of 100 random points on a plane (*points on a plain*, is that a joke?). The cells are color-coded for clarity:
+I'm glad you asked! Lloyd's algorithm is a method for finding evenly spaced points within a Euclidean subplane by iteratively constructing[Voroni diagrams](https://en.wikipedia.org/wiki/Voronoi_diagram) which partitions a subset of the plane into regions called "cells" or "Voronoi cells."  Each cell comprises the coordinates closest to the point inside it. Here's an example of a Voronoi diagram of 100 random points on a plane (*points on a plain*, is that a joke?). The cells are color-coded for clarity:
 ![Vornoi diagram for 100 random points on a plane](./Vornoi-diagram.png)
 
 
@@ -16,7 +17,7 @@ Lloyd's algorithm operates through a series of steps aimed at making increasingl
 1. Move each point to the centroid of its cell
 1. Repeat these steps
 
-As the distance between a point and the centroid of its cell gradually diminishes, the distribution of points converges to a relatively uniform configuration.
+As the distance between a point and the centroid of its cell gradually diminishes, the distribution of points converges to a mesh of relatively uniform cells like the one pictured at the top of this article.
 
 # Dependencies
 The project is built with, [Webpack](https://webpack.js.org/) and [Yarn](https://yarnpkg.com/). You will also need a [browser that supports WebGpu](https://caniuse.com/webgpu)
