@@ -41,7 +41,7 @@ const main = async () => {
   }
   const ears = earcut(points), //<--returns the indexes of the x coordinates of the triangle vertices in the points array
     //fetch the coordiantes of the triangle vertices from the points array
-    stencilVerticies = ears.reduce<number[]>((acc, index) => {
+    stencilVerticies = ears.reduce<number[]>((acc, index) => { 
       const i = index * 2;
       return [...acc, points[i]! / 512, points[i + 1]! / 512];
     }, []),
@@ -421,22 +421,22 @@ const main = async () => {
     // // render!
     // render();
     // window.addEventListener("click", () => {
-    //   render();
-    //   stagingBuffer
-    //     .mapAsync(
-    //       GPUMapMode.READ,
-    //       0, // Offset
-    //       offsetArray.byteLength // Length
-    //     )
-    //     .then(() => {
-    //       const copyArrayBuffer = stagingBuffer.getMappedRange(
-    //         0,
-    //         offsetArray.byteLength
-    //       );
-    //       const data = copyArrayBuffer.slice(0);
-    //       stagingBuffer.unmap();
-    //       console.log(new Float32Array(data));
-    //     });
+      // render();
+      // stagingBuffer
+      //   .mapAsync(
+      //     GPUMapMode.READ,
+      //     0, // Offset
+      //     offsetArray.byteLength // Length
+      //   )
+      //   .then(() => {
+      //     const copyArrayBuffer = stagingBuffer.getMappedRange(
+      //       0,
+      //       offsetArray.byteLength
+      //     );
+      //     const data = copyArrayBuffer.slice(0);
+      //     stagingBuffer.unmap();
+      //     console.log(new Float32Array(data));
+      //   });
     // });
 
     function render() {
