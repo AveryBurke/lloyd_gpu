@@ -10,6 +10,7 @@ I'm glad you asked! Lloyd's algorithm is a method for finding evenly spaced poin
 | ![Vornoi diagram of 100 random points on a plane](./Vornoi-diagram.png) |
 |:--:|
 | *Vornoi diagram of 100 random points on a plane* |
+
 For an example of a practical application, imagine that these points represent items on a screen and you want to highlight the item closest to the user’s mouse. In this scenario, you can render a hidden Voronoi diagram and highlight a point when the mouse is over that point's respective cell.  If you want to know more about Voronoi Diagrams, I suggest reading Francesco S. Bellelli's great [The fascinating world of Voronoi diagrams](https://fbellelli.com/posts/2021-07-08-the-fascinating-world-of-voronoi-diagrams/).
 
 Lloyd's algorithm operates through a series of steps aimed at making increasingly more uniform Voronoi diagrams. The result is a partition of N cells that are nearly identical. The process follows these steps:
