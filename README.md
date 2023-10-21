@@ -11,16 +11,17 @@ I'm glad you asked! Lloyd's algorithm is a method for finding evenly spaced poin
 |:--:|
 | *Vornoi diagram of 100 random points on a plane* |
 
-For an example of a practical application, imagine that these points represent items on a screen and you want to highlight the item closest to the user’s mouse. In this scenario, you can render a hidden Voronoi diagram and highlight a point when the mouse is over that point's respective cell.  If you want to know more about Voronoi Diagrams, I suggest reading Francesco S. Bellelli's great [The fascinating world of Voronoi diagrams](https://fbellelli.com/posts/2021-07-08-the-fascinating-world-of-voronoi-diagrams/).
+For an example of a practical application, imagine the dots represent items on a screen and you want to highlight the item closest to the user’s mouse. In this scenario, you can render a hidden Voronoi diagram and highlight an dot when the mouse is over that dot's respective cell.  If you want to know more about Voronoi Diagrams, I suggest reading Francesco S. Bellelli's excellent article [The fascinating world of Voronoi diagrams](https://fbellelli.com/posts/2021-07-08-the-fascinating-world-of-voronoi-diagrams/).
 
-Lloyd's algorithm operates through a series of steps aimed at making increasingly more uniform Voronoi diagrams. The result is a partition of N cells that are nearly identical. The process follows these steps:
+Lloyd's algorithm operates through a series of steps aimed at making increasingly more uniform Voronoi cells.Those steps are as follows:
 
-1. Create a Voronoi diagram from the given points
-1. Calculate the centroid of each cell
+1. Start with an initial set of points, distributed randomly within the target space
+1. Create a Voronoi diagram around those points
+1. Calculate the centroid (geometric center) of each cell.
 1. Move each point to the centroid of its cell
-1. Repeat these steps
+1. Repeat steps 2 through 5
 
-As the distance between a point and the centroid of its cell gradually diminishes, the diagram converges to a mesh of relatively uniform cells like the one pictured at the top of this article.
+With each iteration the distance between a point and the centroid of its cell diminishes and the diagram converges to a mesh of relatively uniform cells, like the one pictured at the top of this article.
 
 # Dependencies
 The project is built with, [Webpack](https://webpack.js.org/) and [Yarn](https://yarnpkg.com/). You will also need a [browser that supports WebGpu](https://caniuse.com/webgpu)

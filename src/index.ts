@@ -8,10 +8,6 @@ import { arc } from "d3-shape";
 import getPoints from "./static/getPoints";
 import earcut from "earcut";
 
-//TO DO: Manually impliment stencil testing:
-//plan: render the stencil to a red texture. make it avaiblale to the voroni pipeline, through a bind group, and only render from the frament shader
-//if the stencil texture value is 1 (or 0 ?) at that location
-
 const main = async () => {
 
   const ringHeight = 700;
@@ -24,19 +20,21 @@ const main = async () => {
     path = arc()(pathData) || "",
     num_points = 100,
     points = getPoints(num_points, path),
-    centroi =  arc().centroid(pathData)
+    centroid =  arc().centroid(pathData)
     const numData = 1000,
     clearValue = numData + 1;
   //seed the vornoi cell sites
   const coords: number[] = [];
   for (let i = 0; i < numData; ++i) {
-    const { startAngle, endAngle, innerRadius, outerRadius } = pathData;
-    const randomClampedR =
-        Math.random() * (outerRadius - innerRadius) + innerRadius,
-      randomClampedTheta =
-        Math.random() * (endAngle - startAngle) + startAngle - Math.PI / 2,
-      x = Math.cos(randomClampedTheta) * randomClampedR,
-      y = Math.sin(randomClampedTheta) * randomClampedR;
+    // const { startAngle, endAngle, innerRadius, outerRadius } = pathData;
+    // const randomClampedR =
+    //     Math.random() * (outerRadius - innerRadius) + innerRadius,
+    //   randomClampedTheta =
+    //     Math.random() * (endAngle - startAngle) + startAngle - Math.PI / 2,
+    //   x = Math.cos(randomClampedTheta) * randomClampedR,
+    //   y = Math.sin(randomClampedTheta) * randomClampedR;
+    const x  = centroid[0] + Math.random(),
+      y = centroid[1] + Math.random()
     coords.push(x / 512, y / 512);
   }
   const ears = earcut(points), //<--returns the indexes of the x coordinates of the triangle vertices in the points array
@@ -90,16 +88,8 @@ const main = async () => {
       // Second triangle:
       -1.0, -1.0, 1.0, -1.0, 1.0, 1.0,
     ]);
-    // const offsetArray = new Float32Array(
-    //   [...Array(numData * 2)].map((n, i) => {
-    //     const jitter = getRandomArbitrary(-.05, .05)
-    //     return i % 2 === 0 ? (centroi[0] / 512) + jitter : (centroi[1] / 512) + jitter
-    //     // return n % 2 === 0 ?  : 0
-    //     // return getRandomArbitrary()
-    //   })
-    // );
+  
     const offsetArray = new Float32Array(coords)
-    // console.log({ offsetArray });
     const colors = [];
     for (let i = 0; i < numData; i++) {
       colors.push(Math.random(), Math.random(), Math.random(), Math.random());
